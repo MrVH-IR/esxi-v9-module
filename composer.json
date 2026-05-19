@@ -1,19 +1,25 @@
 {
   "name": "mrvh/esxi-v9-module",
   "version": "0.1.0",
-  "description": "Lightweight ESXI v9 PHP Module Written By MRVH-IR github.com/mrvh-ir",
+  "description": "Lightweight ESXi vSphere SOAP SDK for PHP",
   "keywords": ["php" , "esxiv9" , "module"],
   "type": "library",
   "license": "MIT",
-
+  "authors": [
+    {
+      "name": "Mohammad Reza Vahdat",
+      "email": "vahdatmohammad0@gmail.com"
+    }
+  ],
+  "require" : {
+    "php": "^8.2",
+    "ext-soap": "*"
+  },
   "autoload": {
     "psr-4": {
       "EsxiV9\\": "src/"
     }
   },
-
-  "require" : {
-    "php": "^8.2",
-    "ext-soap": "*"
-  }
+  "minimum-stability": "stable",
+  "prefer-stable": true
 }
