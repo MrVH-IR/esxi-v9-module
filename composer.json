@@ -1,0 +1,19 @@
+{
+  "name": "mrvh/esxi-v9-module",
+  "version": "0.1.0",
+  "description": "Lightweight ESXI v9 PHP Module Written By MRVH-IR github.com/mrvh-ir",
+  "keywords": ["php" , "esxiv9" , "module"],
+  "type": "library",
+  "license": "MIT",
+
+  "autoload": {
+    "psr-4": {
+      "EsxiV9\\": "src/"
+    }
+  },
+
+  "require" : {
+    "php": "^8.2",
+    "ext-soap": "*"
+  }
+}
