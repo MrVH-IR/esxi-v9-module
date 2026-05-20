@@ -70,13 +70,31 @@ $vmService->reboot($vmId);
 
 TO-DO-Next Version
 ```text
-delete VM
-datastore list
-network list
-task tracking
-waitForTask()
-getTaskStatus()
-error parsing VMware
-async VM creation tracking
-retry mechanism
+Phase 1
+    create VM
+    list VM
+    power on/off
+    auth
+    datastore list
+    network list
+Phase 2
+    delete VM
+    reboot
+    guest info
+    IP lookup
+    task waiting
+    ISO mounting
+Phase 3
+    template clone
+    snapshots
+    resize disk
+    resize RAM/CPU
+    cloud-init
+    VM customization
+Phase 4
+    vCenter support
+    async queue
+    websocket task stream
+    multi-host orchestration
+    HA support
 ```
