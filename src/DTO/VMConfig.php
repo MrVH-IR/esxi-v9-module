@@ -4,7 +4,7 @@ declare(strict_types=1);
 namespace EsxiV9\DTO;
 
 use EsxiV9\Utils\PasswordGenerator;
-use http\Exception\InvalidArgumentException;
+use InvalidArgumentException;
 
 class VMConfig {
 
