@@ -38,7 +38,7 @@ class VMConfig {
 
     public function getUsername(): ?string
     {
-        return $this->user;
+        return $this->username;
     }
 
     public function getPassword(): ?string
