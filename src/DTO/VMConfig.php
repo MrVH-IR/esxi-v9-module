@@ -15,12 +15,19 @@ class VMConfig {
     private ?string $username = null;
     private ?string $password = null;
     private array $preInstall = [];
+    private string $datastore = 'datastore1';
+    private string $network = 'VM Network';
+    private ?string $iso = null;
+    private string $guestId = 'otherGuest64Bit';
 
     public function getName(): ?string
     {
         return $this->name;
     }
 
+    /**
+     * Returns memory in MEGABYTES (e.g. 2048 = 2GB), matching setMemory().
+     */
     public function getMemory(): int
     {
         return $this->memory;
@@ -51,18 +58,38 @@ class VMConfig {
         return $this->preInstall;
     }
 
+    public function getDatastore(): string
+    {
+        return $this->datastore;
+    }
+
+    public function getNetwork(): string
+    {
+        return $this->network;
+    }
+
+    public function getIso(): ?string
+    {
+        return $this->iso;
+    }
+
+    public function getGuestId(): string
+    {
+        return $this->guestId;
+    }
+
     public function setName(string $name): self
     {
         $this->name = $name;
         return $this;
     }
 
-    public function setMemory(int $memory): self
+    public function setMemory(int $memoryMB): self
     {
-        if ($memory < 1) {
-            throw new InvalidArgumentException("Memory must be greater than 1GB");
+        if ($memoryMB < 512) {
+            throw new InvalidArgumentException("Memory must be at least 512 MB");
         }
-        $this->memory = $memory;
+        $this->memory = $memoryMB;
         return $this;
     }
 
@@ -112,6 +139,34 @@ class VMConfig {
     public function setPreInstall(array $preInstall): self
     {
         $this->preInstall = $preInstall;
+        return $this;
+    }
+
+    public function setDatastore(string $datastore): self
+    {
+        $this->datastore = $datastore;
+        return $this;
+    }
+
+    public function setNetwork(string $network): self
+    {
+        $this->network = $network;
+        return $this;
+    }
+
+    public function setIso(?string $isoPath): self
+    {
+        $this->iso = $isoPath;
+        return $this;
+    }
+
+    /**
+     * VMware GuestOsIdentifier, e.g. "ubuntu64Guest", "windows9_64Guest".
+     * See VMware's GuestOsDescriptor / GuestOsIdentifier enum for valid values.
+     */
+    public function setGuestId(string $guestId): self
+    {
+        $this->guestId = $guestId;
         return $this;
     }
 

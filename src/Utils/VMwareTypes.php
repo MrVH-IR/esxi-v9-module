@@ -12,7 +12,11 @@ class VMwareTypes
 
     public const HOST_SYSTEM = "HostSystem";
 
-    public const DATASTORE = "DataStore";
+    public const DATASTORE = "Datastore";
+
+    public const COMPUTE_RESOURCE = "ComputeResource";
+
+    public const DATACENTER = "Datacenter";
 
     public const NETWORK = "Network";
 
