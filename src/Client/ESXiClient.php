@@ -5,6 +5,8 @@ namespace EsxiV9\Client;
 
 use EsxiV9\Config\Config;
 use EsxiV9\Services\AuthService;
+use EsxiV9\Services\DatastoreService;
+use EsxiV9\Services\NetworkService;
 use EsxiV9\Services\VMResolver;
 use EsxiV9\Services\VMService;
 use EsxiV9\SOAP\SoapConnector;
@@ -17,6 +19,16 @@ class ESXiClient
         private readonly Config $config
     ) {
         $this->connector = new SoapConnector($config);
+    }
+
+    public function datastore(): DatastoreService
+    {
+        return new DatastoreService($this->connector);
+    }
+
+    public function network(): NetworkService
+    {
+        return new NetworkService($this->connector);
     }
 
     public function auth(): AuthService
