@@ -46,28 +46,22 @@ $vm = $client->vm()->create(
         ->setStorage(20)
 );
 ```
-ListVM
 ```php
-$vm = $vmService->list();
+$vmService = $client->vm();
+//Create VM
+$vmId = $vmService->createAndWait(
+(new VMConfig())->setName('test-vm')->setCpu(2)->setMemory(2048)->setStorage(20)
+);
 
-foreach ($vm as $item) {
-    if ($item['name'] === 'test-vm') {
-        //...
-    }
-}
-```
-FindVMS
-```php
-$resolver = $client->vmResolver();
-$vmId = $resolver->getIdByName('ubuntu-01');
-```
-VMService
-```php
-$vmService->powerOff($vmId);
-$vmService->powerOn($vmId);
-$vmService->reboot($vmId);
-```
+// Power On
+$vmService->powerOnAndWait($vmId);
 
+//Change Resource
+$vmService->powerOffAndWait($vmId);
+$vmService->resizeAndWait($vmId, cpu: 4, memoryMB: 4096);
+
+$vmService->removeAndWait($vmId);
+```
 TO-DO-Next Version
 ```text
 Phase 1
