@@ -92,3 +92,15 @@ Phase 4
     multi-host orchestration
     HA support
 ```
+
+Web Panel Added For GUI Control:
+
+Terminal 1: 
+```bash
+composer install &&
+php -S 127.0.0.1:8080 -t api api/index.php
+```
+Terminal 2:
+```bash
+cd web && npm install && npm run dev
+```
