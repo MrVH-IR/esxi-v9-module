@@ -29,7 +29,7 @@ class AuthService
 
             $response = $client->Login([
                 '_this' => $sessionManager,
-                'username' => $this->config->getUsername(),
+                'userName' => $this->config->getUsername(),
                 'password' => $this->config->getPassword(),
             ]);
 

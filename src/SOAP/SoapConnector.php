@@ -31,6 +31,8 @@ class SoapConnector
                 ]
             ]);
 
+            $protocol = $this->config->isSsl() ? 'https' : 'http';
+
             $this->client = new SoapClient(
                 $this->config->getWsdlUrl(),
                 [
@@ -39,6 +41,13 @@ class SoapConnector
                     'cache_wsdl' => WSDL_CACHE_NONE,
                     'stream_context' => $context,
                     'connection_timeout' => $this->config->getTimeout(),
+                    // The <soap:address> endpoint declared inside the fetched
+                    // WSDL is not reliable for vim25 (it can be relative,
+                    // internal, or otherwise unusable), which causes
+                    // "Could not connect to host" on the first real RPC call
+                    // even though the WSDL itself loaded fine. Forcing the
+                    // real endpoint explicitly avoids that.
+                    'location' => sprintf('%s://%s/sdk', $protocol, $this->config->getHost()),
                 ]
             );
 
