@@ -40,14 +40,14 @@ export default function Login({ onLoggedIn }) {
         </div>
 
         <form onSubmit={handleSubmit} className="space-y-4 rounded-lg border border-slate-800 bg-slate-900/50 p-6">
-          <Field label="Host / IP">
+          <Field label="Host / IP" hint="No http:// or https:// — just the IP or hostname">
             <input
-              className={inputClass}
-              placeholder="192.168.1.10"
-              value={host}
-              onChange={(e) => setHost(e.target.value)}
-              required
-              autoFocus
+                className={inputClass}
+                placeholder="192.168.1.10"
+                value={host}
+                onChange={(e) => setHost(e.target.value.replace(/^https?:\/\//i, ''))}
+                required
+                autoFocus
             />
           </Field>
 

@@ -60,6 +60,24 @@ function fail(string $message, int $status = 400): never
     respond(['error' => $message], $status);
 }
 
+// Fatal PHP errors (e.g. TypeError outside a try/catch, out-of-memory,
+// syntax issues in a code path) bypass normal exception handling and would
+// otherwise emit raw HTML, breaking the frontend's JSON parsing with no
+// useful message. Convert them to a JSON error response too.
+register_shutdown_function(function (): void {
+    $error = error_get_last();
+
+    if ($error !== null && in_array($error['type'], [E_ERROR, E_PARSE, E_CORE_ERROR, E_COMPILE_ERROR], true)) {
+        if (!headers_sent()) {
+            http_response_code(500);
+            header('Content-Type: application/json; charset=utf-8');
+        }
+        echo json_encode([
+            'error' => "Fatal error: {$error['message']} in {$error['file']}:{$error['line']}",
+        ]);
+    }
+});
+
 /**
  * Build a logged-in ESXiClient from the credentials stashed in the PHP
  * session by POST /login. We re-authenticate on every request rather than

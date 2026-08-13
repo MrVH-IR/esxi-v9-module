@@ -30,12 +30,16 @@ try {
             }
         }
 
+        $host = trim($body['host']);
+        $host = preg_replace('#^https?://#i', '', $host);
+        $host = rtrim($host, '/');
+
         $_SESSION['esxi'] = [
-            'host' => $body['host'],
+            'host' => $host,
             'username' => $body['username'],
             'password' => $body['password'],
-            'ssl' => $body['ssl'] ?? true,
-            'allowSelfSigned' => $body['allowSelfSigned'] ?? true,
+            'ssl' => (bool) ($body['ssl'] ?? true),
+            'allowSelfSigned' => (bool) ($body['allowSelfSigned'] ?? true),
         ];
 
         // Fail fast if the credentials are actually wrong, instead of
