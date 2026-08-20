@@ -68,6 +68,11 @@ try {
         respond($client->datastore()->list());
     }
 
+    if ($method === 'GET' && preg_match('#^/datastores/([^/]+)/isos$#', $path, $m)) {
+        $client = esxiClientFromSession();
+        respond($client->datastore()->listIsoFiles(urldecode($m[1])));
+    }
+
     if ($method === 'GET' && $path === '/networks') {
         $client = esxiClientFromSession();
         respond($client->network()->list());

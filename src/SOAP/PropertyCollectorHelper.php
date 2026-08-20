@@ -24,7 +24,8 @@ class PropertyCollectorHelper
     /**
      * Full traversal spec: Folder -> childEntity -> (Datacenter, Folder) ->
      * hostFolder/vmFolder -> ComputeResource/VirtualMachine, plus
-     * ComputeResource -> host/resourcePool -> HostSystem/ResourcePool -> vm.
+     * ComputeResource -> host/resourcePool -> HostSystem/ResourcePool -> vm,
+     * plus Datacenter -> datastore/network for inventory listing.
      */
     public static function fullTraversal(): array
     {
@@ -50,6 +51,13 @@ class PropertyCollectorHelper
             self::selectionSpec('visitFolders'),
         ]);
 
+        // NOTE: these two were missing before, which is why datastore/network
+        // listing always came back empty — nothing in the traversal ever
+        // walked a Datacenter's `datastore` / `network` edges.
+        $dcToDs = self::traversalSpec('datacenterDatastoreTraversalSpec', 'Datacenter', 'datastore', []);
+
+        $dcToNet = self::traversalSpec('datacenterNetworkTraversalSpec', 'Datacenter', 'network', []);
+
         $hToVm = self::traversalSpec('hostVmTraversalSpec', 'HostSystem', 'vm', [
             self::selectionSpec('visitFolders'),
         ]);
@@ -58,6 +66,8 @@ class PropertyCollectorHelper
             self::selectionSpec('visitFolders'),
             self::selectionSpec('datacenterHostTraversalSpec'),
             self::selectionSpec('datacenterVmTraversalSpec'),
+            self::selectionSpec('datacenterDatastoreTraversalSpec'),
+            self::selectionSpec('datacenterNetworkTraversalSpec'),
             self::selectionSpec('computeResourceHostTraversalSpec'),
             self::selectionSpec('computeResourceRpTraversalSpec'),
             self::selectionSpec('resourcePoolTraversalSpec'),
@@ -65,7 +75,7 @@ class PropertyCollectorHelper
             self::selectionSpec('hostVmTraversalSpec'),
         ]);
 
-        return [$visitFolders, $dcToHf, $dcToVmf, $crToH, $crToRp, $rpToRp, $rpToVm, $hToVm];
+        return [$visitFolders, $dcToHf, $dcToVmf, $dcToDs, $dcToNet, $crToH, $crToRp, $rpToRp, $rpToVm, $hToVm];
     }
 
     private static function traversalSpec(string $name, string $type, string $path, array $selectSet): SoapVar
@@ -88,8 +98,8 @@ class PropertyCollectorHelper
 
     /**
      * Query the inventory. Pass an empty $selectSet (not null) when $rootObj
-     * already IS the object you want properties for (e.g. a single known VM),
-     * to avoid needlessly traversing the whole tree.
+     * already IS the object you want properties for (e.g. a single known VM
+     * or Task), to avoid needlessly traversing the whole tree.
      *
      * @param array $propertyCollector MOR array (type + _) for the PropertyCollector,
      *                                  read from serviceContent.propertyCollector.
@@ -106,7 +116,14 @@ class PropertyCollectorHelper
     ): array {
         $selectSet ??= self::fullTraversal();
 
-        $objectSet = ['obj' => $rootObj, 'skip' => true];
+        // `skip` means "don't collect properties from $rootObj itself, only
+        // from what the traversal reaches". That's correct when $rootObj is
+        // just a container we're walking through (e.g. rootFolder while
+        // listing VMs) — but WRONG when $rootObj already IS the target
+        // (e.g. a specific VM/Task looked up by id with no traversal at
+        // all), because then skip=true with nothing to traverse means
+        // "collect from nothing" and the result is always empty.
+        $objectSet = ['obj' => $rootObj, 'skip' => !empty($selectSet)];
 
         if (!empty($selectSet)) {
             $objectSet['selectSet'] = $selectSet;
