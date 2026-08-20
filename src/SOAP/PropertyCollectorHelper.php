@@ -148,4 +148,31 @@ class PropertyCollectorHelper
         // PHP's SoapClient does not wrap a single result in an array.
         return is_array($returnval) ? $returnval : [$returnval];
     }
+
+    /**
+     * Normalize an object's `propSet` for safe iteration.
+     *
+     * Same PHP SoapClient quirk as retrieveProperties()'s returnval: when a
+     * query only returns ONE property (e.g. pathSet with a single entry, or
+     * an object that currently only has one of several requested properties
+     * set — like a Task that's still running and only has info.state so
+     * far), PHP hands back a bare stdClass instead of an array containing
+     * one stdClass. Iterating that raw with `(array) $propSet` silently
+     * produces the WRONG thing (the object's own fields, not a one-element
+     * list), so lookups like "find the prop named vmFolder" fail even
+     * though the data is right there. Always go through this helper instead
+     * of casting propSet directly.
+     */
+    public static function normalizePropSet(mixed $propSet): array
+    {
+        if ($propSet === null) {
+            return [];
+        }
+
+        if (is_object($propSet)) {
+            return [$propSet];
+        }
+
+        return $propSet;
+    }
 }
