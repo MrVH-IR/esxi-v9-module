@@ -83,6 +83,7 @@ class DatastoreService
                 'datastorePath' => "[{$datastoreName}]",
                 'searchSpec' => [
                     'matchPattern' => ['*.iso'],
+                    'searchCaseInsensitive' => true,
                 ],
             ]);
 

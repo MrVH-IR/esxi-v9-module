@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace EsxiV9\Services;
 
-use EsxiV9\DTO\MOR;
 use EsxiV9\DTO\TaskResult;
 use EsxiV9\DTO\VMConfig;
 use EsxiV9\Exceptions\VMCreationException;
@@ -18,16 +17,6 @@ use SoapFault;
 
 class VMService
 {
-    /**
-     * Well-known, fixed ManagedObjectReference id for the root/default
-     * resource pool on a STANDALONE ESXi host (no vCenter). This is not a
-     * guess: ESXi always exposes it under this exact id (see VMware KB /
-     * `vim-cmd hostsvc/rsrc/pool_config_get ha-root-pool`). Once this module
-     * supports vCenter-managed hosts, this needs to be resolved dynamically
-     * instead (via PropertyCollectorHelper) since vCenter assigns real ids.
-     */
-    private const DEFAULT_RESOURCE_POOL_ID = 'ha-root-pool';
-
     public function __construct(
         private readonly SoapConnector $connector,
     ) {}
@@ -35,6 +24,64 @@ class VMService
     private function tasks(): TaskService
     {
         return new TaskService($this->connector);
+    }
+
+    /**
+     * Resolve the real Datacenter.vmFolder and a ResourcePool to create a VM
+     * in. CreateVM_Task must be called on a VmFolder specifically — calling
+     * it on the raw rootFolder (a more general container that also holds
+     * the hostFolder) fails with "The operation is not supported on the
+     * object." Hardcoding well-known-looking ids like "ha-folder-root" /
+     * "ha-root-pool" is NOT reliable enough here, so this reads the real
+     * ManagedObjectReferences from the host instead.
+     *
+     * @return array{folder: array, pool: array}
+     */
+    private function resolveCreateVmTarget(\SoapClient $client, array $propertyCollector, array $rootFolder): array
+    {
+        $dcObjects = PropertyCollectorHelper::retrieveProperties(
+            $client,
+            $propertyCollector,
+            $rootFolder,
+            [[
+                'type' => VMwareTypes::DATACENTER,
+                'pathSet' => ['vmFolder'],
+            ]]
+        );
+
+        if (empty($dcObjects)) {
+            throw new VMCreationException('Could not find a Datacenter on this host to create the VM in.');
+        }
+
+        $vmFolderRef = null;
+        foreach ((array) ($dcObjects[0]->propSet ?? []) as $prop) {
+            if ($prop->name === 'vmFolder') {
+                $vmFolderRef = $prop->val;
+            }
+        }
+
+        if ($vmFolderRef === null) {
+            throw new VMCreationException('Datacenter has no vmFolder property.');
+        }
+
+        $rpObjects = PropertyCollectorHelper::retrieveProperties(
+            $client,
+            $propertyCollector,
+            $rootFolder,
+            [[
+                'type' => VMwareTypes::RESOURCE_POOL,
+                'pathSet' => ['name'],
+            ]]
+        );
+
+        if (empty($rpObjects)) {
+            throw new VMCreationException('Could not find a ResourcePool on this host to create the VM in.');
+        }
+
+        return [
+            'folder' => ['type' => $vmFolderRef->type, '_' => $vmFolderRef->_],
+            'pool' => ['type' => $rpObjects[0]->obj->type, '_' => $rpObjects[0]->obj->_],
+        ];
     }
 
     /**
@@ -52,6 +99,7 @@ class VMService
             $content = $this->connector->serviceInstance()->retrieveServiceContent();
 
             $rootFolder = (array) $content['rootFolder'];
+            $propertyCollector = (array) $content['propertyCollector'];
 
             $spec = (new VMSpecBuilder())
                 ->fromConfig($config)
@@ -60,12 +108,11 @@ class VMService
                 ->withISO($config->getIso())
                 ->build();
 
-            $folder = new MOR($rootFolder['type'], $rootFolder['_']);
-            $pool = new MOR(VMwareTypes::RESOURCE_POOL, self::DEFAULT_RESOURCE_POOL_ID);
+            $target = $this->resolveCreateVmTarget($client, $propertyCollector, $rootFolder);
 
             $response = $client->CreateVM_Task([
-                '_this' => $folder->toArray(),
-                'pool' => $pool->toArray(),
+                '_this' => $target['folder'],
+                'pool' => $target['pool'],
                 'config' => $spec,
             ]);
 
